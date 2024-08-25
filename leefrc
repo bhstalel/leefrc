@@ -44,6 +44,9 @@ leef_log(){
 	# Force once
 	unset LEEF_FORCE_LOG
 }
+leef_force_log(){
+	[ -z ${LEEF_FORCE_LOG} ] && LEEF_FORCE_LOG=1
+}
 leef_info(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
 	leef_log "info" "${1}"
@@ -58,6 +61,7 @@ leef_warn(){
 }
 leef_error(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
+	leef_force_log
 	leef_log "error" "${1}"
 }
 # -------------------------------------------------------------------
@@ -117,7 +121,6 @@ leef_setlayout(){
 		)
 	)
 	setxkbmap -layout ${_next_layout} || {
-		[ ${LEEF_ENABLE_LOG} -eq 1 ] && LEEF_FORCE_LOG=1
 		leef_error "Unable to change layout."
 	}
 	_current_layout=${_next_layout}
