@@ -41,24 +41,21 @@ leef_log(){
         ;;
     esac
 
+	# Force once
 	unset LEEF_FORCE_LOG
 }
-# Info
 leef_info(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
 	leef_log "info" "${1}"
 }
-# Debug
 leef_debug(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
 	leef_log "debug" "${1}"
 }
-# Warning
 leef_warn(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
 	leef_log "warn" "${1}"
 }
-# Error
 leef_error(){
 	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
 	leef_log "error" "${1}"
@@ -67,6 +64,8 @@ leef_error(){
 
 # -------------------------------------------------------------------
 # Leef Utilities
+# -------------------------------------------------------------------
+# Find key in array, or print array keys
 leef_util_is_key_in(){
 	local _array=${1}
 	local _key=${2}
