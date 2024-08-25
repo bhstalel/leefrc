@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# Copyright 2024 Talel BELHADJSALEM
+# Personal resource file for my Linux system
+
+LEEF_BASE_DIR=${LEEF_BASE_DIR:-${HOME}}
+LEEF_DOC_DIR="${LEEF_BASE_DIR}/Documents"
+LEEF_DESKTOP_DIR="${LEEF_BASE_DIR}/Desktop"
+
+declare -A LEEF_PLACES=(
+	["git"]="${LEEF_DOC_DIR}/FinalGit"
+	["yoctowork"]="${LEEF_DESKTOP_DIR}/YoctoWork"
+	["yoctoshare"]="${LEEF_DESKTOP_DIR}/YoctoShare"
+)
+declare -a LEEF_LAYOUT=("ar" "fr")
+
+# -------------------------------------------------------------------
+# Logging variables
+LEEF_ENABLE_LOG=${LEEF_ENABLE_LOG:-0}
+LEEF_ENABLE_DEBUG=${LEEF_ENABLE_DEBUG:-0}
+# Logging functions
+leef_log(){
+	[[ ${LEEF_ENABLE_LOG} -ne 1 && -z ${LEEF_FORCE_LOG} ]] && return 0
+
+    local level=$1
+    local content=$2
+
+    case ${level} in
+        "info"|"INFO")
+            echo -e "\e[32m[Leef][INFO] ${content}\e[0m";;
+        "warn"|"WARN"|"WARNING")
+            echo -e "\e[33m[Leef][WARN] ${content}\e[0m";;
+        "debug"|"DEBUG")
+            [ ${LEEF_ENABLE_DEBUG} -eq 1 ] && (
+                echo -e "\e[34m[Leef][DEBUG] ${content}\e[0m"
+            );;
+        "error"|"ERROR")
+            echo -e "\e[31m[Leef][ERROR] ${content}\e[0m"
+        ;;
+        *)
+            echo -e "\e[31m[Leef][ERROR] ${level} not supported\e[0m"
+        ;;
+    esac
+
+	unset LEEF_FORCE_LOG
+}
+# Info
+leef_info(){
+	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
+	leef_log "info" "${1}"
+}
+# Debug
+leef_debug(){
+	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
+	leef_log "debug" "${1}"
+}
+# Warning
+leef_warn(){
+	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
+	leef_log "warn" "${1}"
+}
+# Error
+leef_error(){
+	[ ${#} -ne 1 ] && { echo "Usage: ${0} <msg>"; return 2; }
+	leef_log "error" "${1}"
+}
+# -------------------------------------------------------------------
+
+# -------------------------------------------------------------------
+# Leef Utilities
+leef_util_is_key_in(){
+	local _array=${1}
+	local _key=${2}
+	declare -p ${_array} &> /dev/null || {
+		leef_error "Array ${_array} is not declared";
+		return 2;
+	}
+	local _found=1
+	for k in $(eval "echo \${!${_array}[@]}"); do
+		# Print all keys for anyone that uses this function to
+		# extract them. Best action is to break when the right
+		# key is found, but it is not possible due to printf call.
+		printf "${k} "
+		[ "${k}" == "${_key}" ] && _found=0
+	done
+	return ${_found}
+}
+# -------------------------------------------------------------------
+
+# -------------------------------------------------------------------
+# Changing directory to one of Leef directories
+leef_pushd(){
+	[[ ${#} -ne 1 || -z ${LEEF_PLACES[${1}]} ]] && {
+		printf '%s\n' "
+Usage: leef_pushd <leef_place>
+Leef places: $(leef_util_is_key_in LEEF_PLACES)
+		"; return 2; }
+ 
+	local _place=${1}
+	# Non local variable needed by leef_popd
+	_last_place=${LEEF_PLACES[${_place}]}
+	# Usually leef places are created, but check anyways
+	[ ! -d ${_last_place} ] && { leef_error "${1}: No such file or directory."; return 1; }
+	leef_debug "Changing directory to ${_last_place}"
+	pushd ${_last_place}
+}
+# -------------------------------------------------------------------
+
+# -------------------------------------------------------------------
+# Change keyboard layout
+leef_setlayout(){
+	leef_debug "Changing layout ..."
+	local _next_layout=$(
+		# Set fr as default value
+		[ -z ${_current_layout} ] && echo fr ||
+		(
+			# Switch layout
+			[ "${_current_layout}" == "fr" ] && echo ar || echo fr
+		)
+	)
+	setxkbmap -layout ${_next_layout} || {
+		[ ${LEEF_ENABLE_LOG} -eq 1 ] && LEEF_FORCE_LOG=1
+		leef_error "Unable to change layout."
+	}
+	_current_layout=${_next_layout}
+}
+# -------------------------------------------------------------------
